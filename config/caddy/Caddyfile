@@ -1,0 +1,14 @@
+{
+    email {$SSL_EMAIL}
+}
+
+{$DOMAIN} {
+    reverse_proxy /api/v1/write* http://prometheus:9090 {
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    reverse_proxy /* http://grafana:3000 {
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

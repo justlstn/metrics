@@ -1,0 +1,3 @@
+basic_auth_users:
+  - username: <username>
+    password: <password_hash> 
