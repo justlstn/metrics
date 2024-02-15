@@ -1,0 +1,68 @@
+version: '3.9'
+
+services:
+  caddy:
+    image: caddy
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+      SSL_EMAIL: ${SSL_EMAIL}
+    ports: 
+      - "80:80"
+      - "443:443"
+    networks:
+      - metrics
+    volumes:
+      - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - metrics-caddy-config:/config
+      - metrics-caddy-data:/data
+    depends_on:
+      - grafana
+
+  grafana:
+    container_name: 'grafana-service'
+    image: "grafana/grafana:latest"
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: ${GRAFANA_ANONYMOUS_ALLOWED:-false}
+    volumes:
+      - metrics-grafana:/var/lib/grafana
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1"
+    networks:
+      - metrics
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    command:
+      - --enable-feature=remote-write-receiver 
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.config.file=/etc/prometheus/web_config.yml
+    expose:
+      - 9090
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/web_config.yml:/etc/prometheus/web_config.yml:ro
+      - metrics-prometheus:/prometheus
+    networks:
+      - metrics
+
+networks:
+  metrics:
+    driver: bridge
+
+volumes:
+  metrics-grafana:
+    name: metrics-grafana
+  metrics-prometheus:
+    name: metrics-prometheus
+  metrics-caddy-config:
+    name: metrics-caddy-config
+  metrics-caddy-data:
+    name: metrics-caddy-config
