@@ -43,8 +43,7 @@ htpasswd -nBC 10 "" | tr -d ':\n'
 
 ```yaml
 basic_auth_users:
-  - username: <username>
-    password: <password_hash>
+  username: password_hash
 ```
 
 ## Running the Services
